@@ -2,15 +2,9 @@
 
 A web app that extracts YouTube video transcripts, optimizes them with AI, and saves both versions to a Notion page.
 
-## Setup
+## Prerequisites
 
-### 1. Install dependencies
-
-```bash
-pip install -r requirements.txt
-```
-
-### 2. Set up Notion
+### 1. Set up Notion
 
 1. Go to [notion.so/my-integrations](https://www.notion.so/my-integrations) and create a new integration
 2. Copy the **Internal Integration Token** (starts with `ntn_`)
@@ -21,27 +15,31 @@ pip install -r requirements.txt
    https://notion.so/My-Page-abc123def456...  ← this part is the page ID
    ```
 
-### 3. Set up OpenAI
+### 2. Set up OpenAI
 
 1. Get an API key from [platform.openai.com/api-keys](https://platform.openai.com/api-keys)
 
-### 4. Configure environment
+## Deploy to Render (recommended)
+
+1. Push this repo to GitHub
+2. Go to [render.com](https://render.com) and sign up / log in
+3. Click **New** > **Web Service**
+4. Connect your GitHub repo
+5. Render will auto-detect the `render.yaml` config. If not, set:
+   - **Build Command:** `pip install -r requirements.txt`
+   - **Start Command:** `gunicorn app:app`
+6. Add these **Environment Variables** in the Render dashboard:
+   - `OPENAI_API_KEY` — your OpenAI key
+   - `NOTION_TOKEN` — your Notion integration token
+   - `NOTION_PAGE_ID` — your Notion page ID
+7. Click **Deploy** — Render will give you a public URL like `https://your-app.onrender.com`
+
+## Run locally (optional)
 
 ```bash
+pip install -r requirements.txt
 cp .env.example .env
-```
-
-Edit `.env` with your keys:
-
-```
-OPENAI_API_KEY=sk-your-key-here
-NOTION_TOKEN=ntn_your-token-here
-NOTION_PAGE_ID=your-page-id-here
-```
-
-### 5. Run
-
-```bash
+# fill in your keys in .env
 python app.py
 ```
 
