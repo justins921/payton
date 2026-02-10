@@ -16,10 +16,14 @@ def extract_video_id(url: str) -> str:
     raise ValueError(f"Could not extract video ID from: {url}")
 
 
-def get_transcript(youtube_url: str) -> str:
+def get_transcript(youtube_url: str, proxy_url: str | None = None) -> str:
     """Fetch the transcript for a YouTube video and return as plain text."""
     video_id = extract_video_id(youtube_url)
-    ytt_api = YouTubeTranscriptApi()
+    if proxy_url:
+        proxies = {"https": proxy_url, "http": proxy_url}
+        ytt_api = YouTubeTranscriptApi(proxies=proxies)
+    else:
+        ytt_api = YouTubeTranscriptApi()
     transcript = ytt_api.fetch(video_id)
     lines = [entry.text for entry in transcript]
     return " ".join(lines)

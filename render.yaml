@@ -11,5 +11,7 @@ services:
         sync: false
       - key: NOTION_PAGE_ID
         sync: false
+      - key: PROXY_URL
+        sync: false
       - key: PYTHON_VERSION
         value: "3.12.0"

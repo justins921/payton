@@ -31,9 +31,11 @@ def process():
     if not notion_token or not notion_page_id:
         return jsonify({"error": "NOTION_TOKEN or NOTION_PAGE_ID not set in .env file."}), 500
 
+    proxy_url = os.environ.get("PROXY_URL")
+
     try:
         # Step 1: Get transcript
-        original = get_transcript(youtube_url)
+        original = get_transcript(youtube_url, proxy_url=proxy_url)
 
         # Step 2: Optimize with AI
         optimized = optimize_transcript(original, openai_key)
