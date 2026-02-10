@@ -1,5 +1,6 @@
 import re
 from youtube_transcript_api import YouTubeTranscriptApi
+from youtube_transcript_api.proxies import GenericProxyConfig
 
 
 def extract_video_id(url: str) -> str:
@@ -20,8 +21,11 @@ def get_transcript(youtube_url: str, proxy_url: str | None = None) -> str:
     """Fetch the transcript for a YouTube video and return as plain text."""
     video_id = extract_video_id(youtube_url)
     if proxy_url:
-        proxies = {"https": proxy_url, "http": proxy_url}
-        ytt_api = YouTubeTranscriptApi(proxies=proxies)
+        proxy_config = GenericProxyConfig(
+            http_url=proxy_url,
+            https_url=proxy_url,
+        )
+        ytt_api = YouTubeTranscriptApi(proxy_config=proxy_config)
     else:
         ytt_api = YouTubeTranscriptApi()
     transcript = ytt_api.fetch(video_id)
