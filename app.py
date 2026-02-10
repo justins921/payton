@@ -4,7 +4,7 @@ from dotenv import load_dotenv
 
 from transcript import get_transcript
 from optimizer import optimize_transcript
-from notion_client import save_to_notion
+from notion_service import save_to_notion
 
 load_dotenv()
 
