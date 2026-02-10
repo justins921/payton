@@ -27,13 +27,20 @@
             margin-bottom: 32px;
             font-size: 1rem;
         }
-        .input-group {
-            display: flex;
-            gap: 12px;
-            margin-bottom: 32px;
+        .form-section {
+            margin-bottom: 24px;
+        }
+        label {
+            display: block;
+            font-size: 0.85rem;
+            color: #aaa;
+            margin-bottom: 8px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
         }
         input[type="text"] {
-            flex: 1;
+            width: 100%;
             padding: 14px 18px;
             font-size: 1rem;
             background: #1a1a1a;
@@ -45,9 +52,68 @@
         }
         input[type="text"]:focus { border-color: #ff4444; }
         input[type="text"]::placeholder { color: #555; }
-        button {
-            padding: 14px 28px;
-            font-size: 1rem;
+
+        .mode-toggle {
+            display: flex;
+            gap: 0;
+            margin-bottom: 24px;
+            border-radius: 8px;
+            overflow: hidden;
+            border: 1px solid #333;
+        }
+        .mode-btn {
+            flex: 1;
+            padding: 12px 16px;
+            font-size: 0.9rem;
+            font-weight: 600;
+            background: #1a1a1a;
+            color: #888;
+            border: none;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        .mode-btn.active {
+            background: #ff4444;
+            color: #fff;
+        }
+        .mode-btn:hover:not(.active) { color: #ccc; }
+
+        .paste-section {
+            display: none;
+            margin-bottom: 24px;
+        }
+        .paste-section.active { display: block; }
+
+        textarea {
+            width: 100%;
+            min-height: 180px;
+            padding: 14px 18px;
+            font-size: 0.95rem;
+            font-family: inherit;
+            background: #1a1a1a;
+            border: 1px solid #333;
+            border-radius: 8px;
+            color: #fff;
+            outline: none;
+            resize: vertical;
+            line-height: 1.6;
+            transition: border-color 0.2s;
+        }
+        textarea:focus { border-color: #ff4444; }
+        textarea::placeholder { color: #555; }
+
+        .paste-help {
+            margin-top: 8px;
+            font-size: 0.8rem;
+            color: #666;
+        }
+        .paste-help a { color: #ff6666; text-decoration: none; }
+        .paste-help a:hover { text-decoration: underline; }
+
+        button.submit-btn {
+            width: 100%;
+            padding: 16px 28px;
+            font-size: 1.1rem;
             font-weight: 600;
             background: #ff4444;
             color: #fff;
@@ -55,10 +121,10 @@
             border-radius: 8px;
             cursor: pointer;
             transition: background 0.2s;
-            white-space: nowrap;
+            margin-bottom: 24px;
         }
-        button:hover { background: #e03333; }
-        button:disabled { background: #555; cursor: not-allowed; }
+        button.submit-btn:hover { background: #e03333; }
+        button.submit-btn:disabled { background: #555; cursor: not-allowed; }
 
         .status {
             text-align: center;
@@ -138,6 +204,7 @@
             padding: 16px;
             color: #ff6666;
             display: none;
+            margin-bottom: 24px;
         }
         .error.active { display: block; }
     </style>
@@ -145,18 +212,35 @@
 <body>
     <div class="container">
         <h1>YouTube Transcript to Notion</h1>
-        <p class="subtitle">Paste a YouTube URL to extract, optimize, and save the transcript to Notion.</p>
+        <p class="subtitle">Extract or paste a transcript, optimize it with AI, and save to Notion.</p>
 
-        <div class="input-group">
+        <div class="mode-toggle">
+            <button class="mode-btn active" onclick="setMode('paste')" id="modePaste">Paste Transcript</button>
+            <button class="mode-btn" onclick="setMode('auto')" id="modeAuto">Auto-Extract</button>
+        </div>
+
+        <div class="form-section">
+            <label>YouTube URL</label>
             <input type="text" id="urlInput" placeholder="https://www.youtube.com/watch?v=..." />
-            <button id="processBtn" onclick="processVideo()">Process</button>
+        </div>
+
+        <div class="paste-section active" id="pasteSection">
+            <label>Paste Transcript</label>
+            <textarea id="transcriptInput" placeholder="Paste the transcript from ElevenLabs here..."></textarea>
+            <p class="paste-help">
+                Get the transcript from
+                <a href="https://elevenlabs.io/youtube-transcript-generator" target="_blank">ElevenLabs YouTube Transcript Generator</a>,
+                then paste it above.
+            </p>
         </div>
 
         <div class="error" id="errorBox"></div>
 
+        <button class="submit-btn" id="processBtn" onclick="processVideo()">Optimize & Save to Notion</button>
+
         <div class="status" id="statusBox">
             <span class="spinner"></span>
-            <span id="statusText">Extracting transcript...</span>
+            <span id="statusText">Processing...</span>
         </div>
 
         <div class="results" id="resultsBox">
@@ -177,25 +261,50 @@
     </div>
 
     <script>
+        let currentMode = "paste";
+
+        function setMode(mode) {
+            currentMode = mode;
+            document.getElementById("modePaste").classList.toggle("active", mode === "paste");
+            document.getElementById("modeAuto").classList.toggle("active", mode === "auto");
+            document.getElementById("pasteSection").classList.toggle("active", mode === "paste");
+        }
+
         async function processVideo() {
             const url = document.getElementById("urlInput").value.trim();
-            if (!url) return;
+            const pasted = document.getElementById("transcriptInput").value.trim();
+
+            if (!url) {
+                showError("Please enter a YouTube URL.");
+                return;
+            }
+            if (currentMode === "paste" && !pasted) {
+                showError("Please paste the transcript.");
+                return;
+            }
 
             const btn = document.getElementById("processBtn");
             const status = document.getElementById("statusBox");
             const statusText = document.getElementById("statusText");
             const results = document.getElementById("resultsBox");
-            const errorBox = document.getElementById("errorBox");
 
             btn.disabled = true;
-            errorBox.classList.remove("active");
+            hideError();
             results.classList.remove("active");
             status.classList.add("active");
-            statusText.textContent = "Extracting transcript, optimizing with AI, and saving to Notion... This may take a minute.";
+
+            if (currentMode === "paste") {
+                statusText.textContent = "Optimizing transcript and saving to Notion... This may take a minute.";
+            } else {
+                statusText.textContent = "Extracting transcript, optimizing with AI, and saving to Notion... This may take a minute.";
+            }
 
             try {
                 const formData = new FormData();
                 formData.append("youtube_url", url);
+                if (currentMode === "paste") {
+                    formData.append("pasted_transcript", pasted);
+                }
 
                 const response = await fetch("/process", {
                     method: "POST",
@@ -216,11 +325,20 @@
                 results.classList.add("active");
             } catch (err) {
                 status.classList.remove("active");
-                errorBox.textContent = err.message;
-                errorBox.classList.add("active");
+                showError(err.message);
             } finally {
                 btn.disabled = false;
             }
+        }
+
+        function showError(msg) {
+            const box = document.getElementById("errorBox");
+            box.textContent = msg;
+            box.classList.add("active");
+        }
+
+        function hideError() {
+            document.getElementById("errorBox").classList.remove("active");
         }
 
         document.getElementById("urlInput").addEventListener("keydown", function(e) {

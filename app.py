@@ -19,6 +19,8 @@ def index():
 @app.route("/process", methods=["POST"])
 def process():
     youtube_url = request.form.get("youtube_url", "").strip()
+    pasted_transcript = request.form.get("pasted_transcript", "").strip()
+
     if not youtube_url:
         return jsonify({"error": "Please provide a YouTube URL."}), 400
 
@@ -34,8 +36,11 @@ def process():
     proxy_url = os.environ.get("PROXY_URL")
 
     try:
-        # Step 1: Get transcript
-        original = get_transcript(youtube_url, proxy_url=proxy_url)
+        # Step 1: Get transcript (pasted or auto-extracted)
+        if pasted_transcript:
+            original = pasted_transcript
+        else:
+            original = get_transcript(youtube_url, proxy_url=proxy_url)
 
         # Step 2: Optimize with AI
         optimized = optimize_transcript(original, openai_key)
